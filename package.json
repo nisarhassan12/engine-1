@@ -70,5 +70,8 @@
     "tsd": "jsdoc -c conf-tsd.json",
     "uglify": "uglifyjs build/playcanvas.js --compress --mangle --output build/playcanvas.min.js",
     "unzipbundle": "gzip -x tests/assets/bundle.gz"
+  },
+  "dependencies": {
+    "rollup-plugin-assemblyscript": "^1.2.0"
   }
 }

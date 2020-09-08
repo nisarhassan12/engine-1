@@ -1,3 +1,7 @@
+//import { instancePromise } from "asc:../assembly-script/addition.as";
+import { wasmUrl } from "asc:../assembly-script/addition.as";
+
+
 import { now } from  '../core/time.js';
 
 import { Color } from '../core/color.js';

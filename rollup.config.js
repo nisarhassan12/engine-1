@@ -3,6 +3,7 @@ import { createFilter } from '@rollup/pluginutils';
 import cleanup from 'rollup-plugin-cleanup';
 import { version } from './package.json';
 import Preprocessor from 'preprocessor';
+import { asc } from "rollup-plugin-assemblyscript";
 
 const execSync = require('child_process').execSync;
 const revision = execSync('git rev-parse --short HEAD').toString().trim();
@@ -97,6 +98,7 @@ export default [{
         name: 'pc'
     },
     plugins: [
+        asc('-b'),
         preprocessor({
             PROFILER: false,
             DEBUG: false,
