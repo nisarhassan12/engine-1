@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PlayCanvas MT</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="icon" type="image/png" href="../playcanvas-favicon.png" />
+    <script src="../../build/playcanvas.js"></script>
+    <script src="../../build/playcanvas-extras.js"></script>
+    <style>
+        body { 
+            margin: 0;
+            overflow-y: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- The canvas element -->
+    <canvas id="application-canvas"></canvas>
+
+    <!-- The script -->
+    <script>
+
+        var worker = new Worker('mt_worker.js');
+
+        var render = function (frame) {
+            console.log('rendering frame=' + frame);
+        };
+
+        var animUpdate = function (frame) {
+            // kick off synchronous update
+            console.log('main: preparing frame=' + frame);
+            worker.postMessage(frame + '');
+            console.log('main: updating frame=' + frame);
+        };
+
+        var frame = 0;
+        function frameHandler(timestamp) {
+            // kick off update for next frame
+            animUpdate(frame++);
+        };
+
+        var continueAnimUpdate = function (frame) {
+            console.log('main: got result for frame=' + frame);
+
+            // request the next frame
+            window.requestAnimationFrame(frameHandler);
+        };
+
+        worker.onmessage = function (e) {
+            continueAnimUpdate(e.data);
+        };
+
+        window.requestAnimationFrame(frameHandler);
+    </script>
+</body>
+</html>

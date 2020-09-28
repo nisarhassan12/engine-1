@@ -95,6 +95,8 @@ function ParticleSystemComponentSystem(app) {
 
     this.schema = _schema;
 
+    this.asyncJobs = [];
+
     this.propertyTypes = {
         emitterExtents: 'vec3',
         emitterExtentsInner: 'vec3',
@@ -273,6 +275,11 @@ Object.assign(ParticleSystemComponentSystem.prototype, {
 
     onBeforeRemove: function (entity, component) {
         component.onBeforeRemove();
+    },
+
+    registerAsyncJob: function (job) {
+        // store the job
+        this.asyncJobs.push(job);
     }
 });
 
