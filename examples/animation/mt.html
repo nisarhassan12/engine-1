@@ -21,38 +21,43 @@
 
     <!-- The script -->
     <script>
+        var frame = 0;
+
+        var animUpdate = function (timestamp) {
+            console.log('main: preparing frame=' + frame);
+
+            // kick off asynchronous update
+            worker.postMessage(frame);
+
+            // do heavy work
+            var tmp = '';
+            for (var i=0; i<5; ++i) {
+                console.log('main: working... frame=' + frame);
+                for (var j=0; j<10000; ++j) {
+                    for (var k=0; k<500; ++k) {
+                        tmp[i] = j+k;
+                    }
+                }
+            }
+            console.log('main: working done');
+        };
+
+        var animUpdateComplete = function (completedFrame) {
+            console.log('main: got result for frame=' + completedFrame);
+            frame++;
+        };
 
         var worker = new Worker('mt_worker.js');
-
-        var render = function (frame) {
-            console.log('rendering frame=' + frame);
-        };
-
-        var animUpdate = function (frame) {
-            // kick off synchronous update
-            console.log('main: preparing frame=' + frame);
-            worker.postMessage(frame + '');
-            console.log('main: updating frame=' + frame);
-        };
-
-        var frame = 0;
-        function frameHandler(timestamp) {
-            // kick off update for next frame
-            animUpdate(frame++);
-        };
-
-        var continueAnimUpdate = function (frame) {
-            console.log('main: got result for frame=' + frame);
-
-            // request the next frame
-            window.requestAnimationFrame(frameHandler);
-        };
-
         worker.onmessage = function (e) {
-            continueAnimUpdate(e.data);
+            if (e.data === 'ready') {
+                console.log('main: worker is ready');
+            } else {
+                animUpdateComplete(e.data);
+            }
+            window.requestAnimationFrame(animUpdate);
         };
-
-        window.requestAnimationFrame(frameHandler);
+        console.log('main: initializing worker');
+        worker.postMessage('init');
     </script>
 </body>
 </html>
