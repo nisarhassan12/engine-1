@@ -75,8 +75,12 @@ function Render2d(device, colors, maxQuads) {
                                                        vertexShader,
                                                        fragmentShader,
                                                        "mini-stats");
-    this.buffer = new pc.VertexBuffer(device, format, maxQuads * 4, pc.BUFFER_STREAM);
-    this.data = new Float32Array(this.buffer.numBytes / 4);
+    this.buffer = new pc.VertexBuffer(device, format, maxQuads * 4, pc.BUFFER_DYNAMIC);
+    this.data = [
+        new Float32Array(this.buffer.numBytes / 4),
+        new Float32Array(this.buffer.storage)
+    ];
+    this.dataIdx = 0;
 
     this.indexBuffer = new pc.IndexBuffer(device, pc.INDEXFORMAT_UINT16, maxQuads * 6, pc.BUFFER_STATIC, indices);
 
@@ -138,7 +142,7 @@ Object.assign(Render2d.prototype, {
         var v1 = v + (uh === undefined ? h : uh);
 
         var colorize = enabled ? 1 : 0;
-        this.data.set([
+        this.data[this.dataIdx].set([
             x,  y,  colorize, u,  v,  0, 0,
             x1, y,  colorize, u1, v,  1, 0,
             x1, y1, colorize, u1, v1, 1, 1,
@@ -151,7 +155,8 @@ Object.assign(Render2d.prototype, {
         var buffer = this.buffer;
 
         // set vertex data (swap storage)
-        buffer.setData(this.data.buffer);
+        buffer.setData(this.data[this.dataIdx].buffer);
+        this.dataIdx = 1 - this.dataIdx;
 
         device.updateBegin();
         device.setDepthTest(false);

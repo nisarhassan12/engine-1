@@ -112,16 +112,17 @@
 
             // when texture is loaded add particlesystem component to entity
             entity.addComponent("particlesystem", {
-                numParticles: 200,
-                lifetime: 2,
-                rate: 0.01,
+                numParticles: 1000,
+                lifetime: 1,
+                rate: 0.001,
                 scaleGraph: scaleCurve,
                 rotationSpeedGraph: angleCurve,
                 colorGraph: colorCurve,
                 colorMap: asset.resource,
                 velocityGraph: worldVelocityCurve,
                 localVelocityGraph: localVelocityCurve,
-                localVelocityGraph2: localVelocityCurve2
+                localVelocityGraph2: localVelocityCurve2,
+                sort: pc.PARTICLESORT_DISTANCE
             });
         });
     </script>

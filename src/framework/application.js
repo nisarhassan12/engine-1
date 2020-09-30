@@ -119,6 +119,8 @@ import {
     RESOLUTION_AUTO, RESOLUTION_FIXED
 } from './constants.js';
 
+import { InitializeWorkers } from '../async/worker.js';
+
 var _deprecationWarning = false;
 var tempGraphNode = new GraphNode();
 
@@ -445,6 +447,8 @@ function Application(canvas, options) {
         name: "World",
         id: LAYERID_WORLD
     });
+
+    InitializeWorkers(this, 1);
 
     if (this.graphicsDevice.webgl2) {
         // WebGL 2 depth layer just copies existing depth
@@ -2384,7 +2388,10 @@ var _frameEndData = {};
 // create tick function to be wrapped in closure
 var makeTick = function (_app) {
     var application = _app;
-    var frameRequest;
+    var requestAnimationFrame = (_app.vr && _app.vr.display && _app.vr.display.requestAnimationFrame) ||
+                                (_app.xr.session && _app.xr.session.requestAnimationFrame) ||
+                                window.requestAnimationFrame;
+    // var frameRequest;
 
     return function (timestamp, frame) {
         if (!application.graphicsDevice)
@@ -2392,10 +2399,10 @@ var makeTick = function (_app) {
 
         Application._currentApplication = application;
 
-        if (frameRequest) {
-            window.cancelAnimationFrame(frameRequest);
-            frameRequest = null;
-        }
+        // if (frameRequest) {
+        //     window.cancelAnimationFrame(frameRequest);
+        //     frameRequest = null;
+        // }
 
         // have current application pointer in pc
         app = application;
@@ -2408,17 +2415,10 @@ var makeTick = function (_app) {
 
         application._time = currentTime;
 
-        // Submit a request to queue up a new animation frame immediately
-        if (application.vr && application.vr.display) {
-            frameRequest = application.vr.display.requestAnimationFrame(application.tick);
-        } else if (application.xr.session) {
-            frameRequest = application.xr.session.requestAnimationFrame(application.tick);
-        } else {
-            frameRequest = window.requestAnimationFrame(application.tick);
-        }
-
-        if (application.graphicsDevice.contextLost)
+        if (application.graphicsDevice.contextLost) {
+            requestAnimationFrame(application.tick);
             return;
+        }
 
         application._fillFrameStatsBasic(currentTime, dt, ms);
 
@@ -2437,23 +2437,30 @@ var makeTick = function (_app) {
 
         application.update(dt);
 
-        application.fire("framerender");
+        function continuation() {
+            application.fire("framerender");
 
-        if (application.autoRender || application.renderNextFrame) {
-            application.render();
-            application.renderNextFrame = false;
+            if (application.autoRender || application.renderNextFrame) {
+                application.render();
+                application.renderNextFrame = false;
+            }
+
+            // set event data
+            _frameEndData.timestamp = now();
+            _frameEndData.target = application;
+
+            application.fire("frameend", _frameEndData);
+            application.fire("frameEnd", _frameEndData);// deprecated old event, remove when editor updated
+
+            if (application.vr && application.vr.display && application.vr.display.presenting) {
+                application.vr.display.submitFrame();
+            }
+
+            // request the next animation frame
+            requestAnimationFrame(application.tick);
         }
 
-        // set event data
-        _frameEndData.timestamp = now();
-        _frameEndData.target = application;
-
-        application.fire("frameend", _frameEndData);
-        application.fire("frameEnd", _frameEndData);// deprecated old event, remove when editor updated
-
-        if (application.vr && application.vr.display && application.vr.display.presenting) {
-            application.vr.display.submitFrame();
-        }
+        application.fire("async", continuation);
     };
 };
 

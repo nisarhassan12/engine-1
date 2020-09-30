@@ -23,8 +23,19 @@
     <script>
         var frame = 0;
 
+        var avgPrev = 0;
+        var avgFrames = 0;
+
         var animUpdate = function (timestamp) {
-            console.log('main: preparing frame=' + frame);
+            // console.log('main: preparing frame=' + frame);
+
+            avgFrames++;
+            var diff = timestamp - avgPrev;
+            if (diff > 1000) {
+                console.log('avg=' + diff  / avgFrames + 'ms');
+                avgPrev = timestamp;
+                avgFrames = 0;
+            }
 
             // kick off asynchronous update
             worker.postMessage(frame);
@@ -32,18 +43,18 @@
             // do heavy work
             var tmp = '';
             for (var i=0; i<5; ++i) {
-                console.log('main: working... frame=' + frame);
-                for (var j=0; j<10000; ++j) {
-                    for (var k=0; k<500; ++k) {
+                // console.log('main: working... frame=' + frame);
+                for (var j=0; j<10; ++j) {
+                    for (var k=0; k<50; ++k) {
                         tmp[i] = j+k;
                     }
                 }
             }
-            console.log('main: working done');
+            // console.log('main: working done');
         };
 
         var animUpdateComplete = function (completedFrame) {
-            console.log('main: got result for frame=' + completedFrame);
+            // console.log('main: got result for frame=' + completedFrame);
             frame++;
         };
 
