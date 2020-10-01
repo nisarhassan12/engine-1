@@ -1388,6 +1388,7 @@ Object.assign(Application.prototype, {
         if (script.legacy)
             ComponentSystem.fixedUpdate(1.0 / 60.0, this._inTools);
 
+        ComponentSystem.preUpdate(dt, this._inTools);
         ComponentSystem.update(dt, this._inTools);
         ComponentSystem.animationUpdate(dt, this._inTools);
         ComponentSystem.postUpdate(dt, this._inTools);

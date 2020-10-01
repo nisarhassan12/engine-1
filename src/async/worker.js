@@ -1,10 +1,19 @@
 import { EventHandler } from "../core/event-handler";
-import { particle } from "../graphics/program-lib/programs/particle";
 
 function WorkerWrap() {
 
-    function updateParticles(payload) {
+    function sortParticles(order, distance) {
+        var i;
 
+        for (i = 0; i < order.length; ++i) {
+            order[i] = i;
+        }
+
+        order.sort(function (a, b) {
+            var av = distance[a];
+            var bv = distance[b];
+            return (av < bv) ? -1 : (bv < av ? 1 : 0);
+        });
     }
 
     onmessage = function (e) {
@@ -14,8 +23,14 @@ function WorkerWrap() {
                 postMessage({ type: 'initDone', worker: data.worker });
                 break;
             case 'job':
-                var result = updateParticles(data.payload);
-                postMessage({ type: 'jobDone', id: data.id, payload: result[0] }, result[1]);
+                var order = new Float32Array(data.payload.order);
+                var distance = new Float32Array(data.payload.distance);
+                sortParticles(order, distance);
+                postMessage({
+                    type: 'jobDone',
+                    id: data.id,
+                    payload: { order: order.buffer, distance: distance.buffer }
+                }, [order.buffer, distance.buffer]);
                 break;
         }
     };
@@ -45,8 +60,9 @@ function handleWorkerResponse(e) {
             }
             delete activeJobs[data.id];
 
-            // handle jobs completing
-            if (Object.keys(activeJobs).length === 0 && asyncContinuation) {
+            // if we've completed our last job and there is an asyncContinuation (meaning
+            // that main thread is waiting for results) then invoke the continuation
+            if (asyncContinuation && Object.keys(activeJobs).length === 0) {
                 asyncContinuation();
                 asyncContinuation = null;
             }
@@ -69,9 +85,13 @@ function InitializeWorkers(app, numWorkers) {
         awaitingInit++;
     }
 
+    // this handler is called by the main thread after update has finished running
+    // and before main thread render starts. the continuation is the function which
+    // will continue the frame - i.e. rendering the scene
     app.on('async', function (continuation) {
         if (Object.keys(activeJobs).length === 0) {
-            // no jobs were requested this frame, invoke the continuation immediately
+            // either no jobs were requested this frame, or the jobs have already run
+            // to completion, either way we can invoke the continuation immediately
             continuation();
         } else {
             asyncContinuation = continuation;
@@ -88,16 +108,16 @@ function allocateWorker() {
     return workers[worker];
 }
 
-function startJob(callback, payload, transferList) {
+function startJob(payload, transferList, callback) {
     // store callback
     var id = jobId++;
     activeJobs[id] = callback;
     allocateWorker().postMessage({ type: 'job', id: id, payload: payload }, transferList);
 }
 
-function addJob(callback, payload, transferList) {
+function addJob(payload, transferList, callback) {
     if (workers.length > 0) {
-        startJob(callback, payload, transferList);
+        startJob(payload, transferList, callback);
     }
 }
 

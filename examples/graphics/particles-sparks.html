@@ -103,27 +103,29 @@
         ]);
 
         // Create entity for particle system
-        var entity = new pc.Entity();
-        app.root.addChild(entity);
-        entity.setLocalPosition(0, 0, 0);
-
         // load snowflake texture
         app.assets.loadFromUrl('../assets/textures/spark.png', 'texture', function (err, asset) {
 
-            // when texture is loaded add particlesystem component to entity
-            entity.addComponent("particlesystem", {
-                numParticles: 1000,
-                lifetime: 1,
-                rate: 0.001,
-                scaleGraph: scaleCurve,
-                rotationSpeedGraph: angleCurve,
-                colorGraph: colorCurve,
-                colorMap: asset.resource,
-                velocityGraph: worldVelocityCurve,
-                localVelocityGraph: localVelocityCurve,
-                localVelocityGraph2: localVelocityCurve2,
-                sort: pc.PARTICLESORT_DISTANCE
-            });
+            for (var i = 0; i < 4; ++i) {
+                var entity = new pc.Entity();
+                app.root.addChild(entity);
+                entity.setLocalPosition(-3 + i * 2, 0, 0);
+
+                // when texture is loaded add particlesystem component to entity
+                entity.addComponent("particlesystem", {
+                    numParticles: 1000,
+                    lifetime: 1,
+                    rate: 0.001,
+                    scaleGraph: scaleCurve,
+                    rotationSpeedGraph: angleCurve,
+                    colorGraph: colorCurve,
+                    colorMap: asset.resource,
+                    velocityGraph: worldVelocityCurve,
+                    localVelocityGraph: localVelocityCurve,
+                    localVelocityGraph2: localVelocityCurve2,
+                    sort: pc.PARTICLESORT_DISTANCE
+                });
+            }
         });
     </script>
 </body>

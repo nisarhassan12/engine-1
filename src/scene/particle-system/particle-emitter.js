@@ -1197,9 +1197,7 @@ Object.assign(ParticleEmitter.prototype, {
         if (!this.useCpu) {
             this._gpuUpdater.update(device, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
         } else {
-            var data = new Float32Array(this.vertexBuffer.lock());
-            this._cpuUpdater.update(data, this.particleTex, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
-            // this.vertexBuffer.unlock();
+            this._cpuUpdater.update(this.particleTex, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
         }
 
         if (!this.loop) {
@@ -1216,6 +1214,14 @@ Object.assign(ParticleEmitter.prototype, {
         // #ifdef PROFILER
         this._addTimeTime += now() - startTime;
         // #endif
+    },
+
+    // called after n addTime steps have been completed
+    postUpdate: function () {
+        if (this.useCpu) {
+            var data = new Float32Array(this.vertexBuffer.lock());
+            this._cpuUpdater.postUpdate(data, this.particleTex);
+        }
     },
 
     _destroyResources: function () {

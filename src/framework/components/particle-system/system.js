@@ -119,7 +119,7 @@ function ParticleSystemComponentSystem(app) {
     };
 
     this.on('beforeremove', this.onBeforeRemove, this);
-    ComponentSystem.bind('update', this.onUpdate, this);
+    ComponentSystem.bind('preUpdate', this.onUpdate, this);
 }
 ParticleSystemComponentSystem.prototype = Object.create(ComponentSystem.prototype);
 ParticleSystemComponentSystem.prototype.constructor = ParticleSystemComponentSystem;
@@ -265,6 +265,9 @@ Object.assign(ParticleSystemComponentSystem.prototype, {
                             stats._updatesPerFrame += numSteps;
                             stats._frameTime += emitter._addTimeTime;
                             emitter._addTimeTime = 0;
+
+                            // handle post update
+                            emitter.postUpdate();
                         }
                         emitter.finishFrame();
                     }

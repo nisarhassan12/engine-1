@@ -45,6 +45,11 @@ Object.assign(ComponentSystem, {
     },
 
     // Update all ComponentSystems
+    preUpdate: function (dt, inTools) {
+        this._helper(this._preUpdate, dt);
+    },
+
+    // Update all ComponentSystems
     update: function (dt, inTools) {
         this._helper(inTools ? this._toolsUpdate : this._update, dt);
     },
@@ -66,6 +71,7 @@ Object.assign(ComponentSystem, {
     _init: [],
     _postInit: [],
     _toolsUpdate: [],
+    _preUpdate: [],
     _update: [],
     _animationUpdate: [],
     _fixedUpdate: [],
@@ -78,6 +84,9 @@ Object.assign(ComponentSystem, {
                 break;
             case 'postInitialize':
                 this._postInit.push({ f: func, s: scope });
+                break;
+            case 'preUpdate':
+                this._preUpdate.push({ f: func, s: scope });
                 break;
             case 'update':
                 this._update.push({ f: func, s: scope });
@@ -114,6 +123,9 @@ Object.assign(ComponentSystem, {
                 break;
             case 'postInitialize':
                 this._erase(this._postInit, func, scope);
+                break;
+            case 'preUpdate':
+                this._erase(this._preUpdate, func, scope);
                 break;
             case 'update':
                 this._erase(this._update, func, scope);
@@ -333,6 +345,7 @@ ComponentSystem.destroy = function () {
     ComponentSystem.off('initialize');
     ComponentSystem.off('postInitialize');
     ComponentSystem.off('toolsUpdate');
+    ComponentSystem.off('preUpdate');
     ComponentSystem.off('update');
     ComponentSystem.off('animationUpdate');
     ComponentSystem.off('fixedUpdate');
@@ -341,6 +354,7 @@ ComponentSystem.destroy = function () {
     ComponentSystem._init = [];
     ComponentSystem._postInit = [];
     ComponentSystem._toolsUpdate = [];
+    ComponentSystem._preUpdate = [];
     ComponentSystem._update = [];
     ComponentSystem._animationUpdate = [];
     ComponentSystem._fixedUpdate = [];
