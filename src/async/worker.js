@@ -1,4 +1,5 @@
 import { EventHandler } from "../core/event-handler";
+import { particle } from "../graphics/program-lib/programs/particle";
 
 function WorkerWrap() {
 
@@ -100,36 +101,18 @@ function addJob(callback, payload, transferList) {
     }
 }
 
-var sortBuf = [];
+function sortParticles(order, distance) {
+    var i;
 
-function sortParticles(numParticles, particleStride, particleDistance, vbCPU, vbOld) {
-    var i, j;
-
-    // resize sortbuf if it's too small
-    if (sortBuf.length < numParticles) {
-        for (i = sortBuf.length; i < numParticles; ++i) {
-            sortBuf[i] = [0, 0];
-        }
+    for (i = 0; i < order.length; ++i) {
+        order[i] = i;
     }
 
-    for (i = 0; i < numParticles; i++) {
-        sortBuf[i][0] = i;
-        sortBuf[i][1] = particleDistance[Math.floor(vbCPU[i * particleStride + 3])]; // particle id
-    }
-
-    vbOld.set(vbCPU);
-
-    sortBuf.sort(function (p1, p2) {
-        return p1[1] - p2[1];
+    order.sort(function (a, b) {
+        var av = distance[a];
+        var bv = distance[b];
+        return (av < bv) ? -1 : (bv < av ? 1 : 0);
     });
-
-    for (i = 0; i < numParticles; i++) {
-        var src = sortBuf[i][0] * particleStride;
-        var dest = i * particleStride;
-        for (j = 0; j < particleStride; j++) {
-            vbCPU[dest + j] = vbOld[src + j];
-        }
-    }
 }
 
 export {

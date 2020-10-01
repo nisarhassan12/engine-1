@@ -159,8 +159,8 @@ ParticleCPUUpdater.prototype.calcSpawnPosition = function (particleTex, spawnMat
     }
 };
 
-// This should only change emitter state via in-params like data, vbToSort, etc.
-ParticleCPUUpdater.prototype.update = function (data, vbToSort, particleTex, spawnMatrix, extentsInnerRatioUniform, emitterPos, delta, isOnStop) {
+// This should only change emitter state via in-params like data, particleTex, etc.
+ParticleCPUUpdater.prototype.update = function (data, particleTex, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop) {
     var a, b, c, i, j;
     var emitter = this._emitter;
 
@@ -176,7 +176,7 @@ ParticleCPUUpdater.prototype.update = function (data, vbToSort, particleTex, spa
     }
 
     // Particle updater emulation
-    emitterPos = (emitter.meshInstance.node === null || emitter.localSpace) ? Vec3.ZERO : emitter.meshInstance.node.getPosition();
+    var emitterPos = (emitter.meshInstance.node === null || emitter.localSpace) ? Vec3.ZERO : emitter.meshInstance.node.getPosition();
     var posCam = emitter.camera ? emitter.camera._node.getPosition() : Vec3.ZERO;
 
     var vertSize = !emitter.useMesh ? 15 : 17;
@@ -185,7 +185,7 @@ ParticleCPUUpdater.prototype.update = function (data, vbToSort, particleTex, spa
     var precision1 = emitter.precision - 1;
 
     for (i = 0; i < emitter.numParticles; i++) {
-        var id = Math.floor(emitter.vbCPU[i * emitter.numParticleVerts * (emitter.useMesh ? 6 : 4) + 3]);
+        var id = emitter.particleOrder[i];
 
         var rndFactor = particleTex[id * particleTexChannels + 0 + emitter.numParticlesPot * 2 * particleTexChannels];
         rndFactor3Vec.x = rndFactor;
@@ -372,14 +372,16 @@ ParticleCPUUpdater.prototype.update = function (data, vbToSort, particleTex, spa
             }
 
             if (emitter.sort > 0) {
+                var distance;
                 if (emitter.sort === 1) {
                     tmpVec3.copy(particleFinalPos).sub(posCam);
-                    emitter.particleDistance[id] = -(tmpVec3.x * tmpVec3.x + tmpVec3.y * tmpVec3.y + tmpVec3.z * tmpVec3.z);
+                    distance = -(tmpVec3.x * tmpVec3.x + tmpVec3.y * tmpVec3.y + tmpVec3.z * tmpVec3.z);
                 } else if (emitter.sort === 2) {
-                    emitter.particleDistance[id] = life;
+                    distance = life;
                 } else if (emitter.sort === 3) {
-                    emitter.particleDistance[id] = -life;
+                    distance = -life;
                 }
+                emitter.particleDistance[id] = distance;
             }
         }
 
@@ -441,36 +443,7 @@ ParticleCPUUpdater.prototype.update = function (data, vbToSort, particleTex, spa
 
     // Particle sorting
     if (emitter.sort > PARTICLESORT_NONE && emitter.camera) {
-        /*
-        sortParticles(emitter.numParticles,
-                      emitter.numParticleVerts * (emitter.useMesh ? 6 : 4),
-                      emitter.particleDistance,
-                      emitter.vbCPU,
-                      emitter.vbOld);
-        //*/
-
-        //*
-        var vbStride = emitter.useMesh ? 6 : 4;
-        var particleDistance = emitter.particleDistance;
-        for (i = 0; i < emitter.numParticles; i++) {
-            vbToSort[i][0] = i;
-            vbToSort[i][1] = particleDistance[Math.floor(emitter.vbCPU[i * emitter.numParticleVerts * vbStride + 3])]; // particle id
-        }
-
-        emitter.vbOld.set(emitter.vbCPU);
-
-        vbToSort.sort(function (p1, p2) {
-            return p1[1] - p2[1];
-        });
-
-        for (i = 0; i < emitter.numParticles; i++) {
-            var src = vbToSort[i][0] * emitter.numParticleVerts * vbStride;
-            var dest = i * emitter.numParticleVerts * vbStride;
-            for (j = 0; j < emitter.numParticleVerts * vbStride; j++) {
-                emitter.vbCPU[dest + j] = emitter.vbOld[src + j];
-            }
-        }
-        //*/
+        sortParticles(emitter.particleOrder, emitter.particleDistance);
     }
 };
 

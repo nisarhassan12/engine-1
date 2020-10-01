@@ -308,9 +308,8 @@ var ParticleEmitter = function (graphicsDevice, options) {
     this.internalTex2 = null;
     this.colorParam = null;
 
-    this.vbToSort = null;
     this.vbCPU = null;
-    this.vbOld = null;
+    this.particleIndex = null;
     this.particleDistance = null;
 
     this.camera = null;
@@ -617,9 +616,12 @@ Object.assign(ParticleEmitter.prototype, {
         }
 
         // Dynamic simulation data
-        this.vbToSort = new Array(this.numParticles);
-        for (var iSort = 0; iSort < this.numParticles; iSort++) this.vbToSort[iSort] = [0, 0];
+        this.particleOrder = new Float32Array(this.numParticles);
         this.particleDistance = new Float32Array(this.numParticles);
+        for (i = 0; i < this.numParticles; ++i) {
+            this.particleOrder[i] = i;
+            this.particleDistance[i] = 0;
+        }
 
         this._gpuUpdater.randomize();
 
@@ -640,8 +642,7 @@ Object.assign(ParticleEmitter.prototype, {
             if (this.useCpu) this.particleTex[i * particleTexChannels + 3 + this.numParticlesPot * 2 * particleTexChannels] = 1; // hide/show
         }
 
-        this.particleTexStart = new Float32Array(this.numParticlesPot * particleTexHeight * particleTexChannels);
-        for (i = 0; i < this.particleTexStart.length; i++) this.particleTexStart[i] = this.particleTex[i];
+        this.particleTexStart = new Float32Array(this.particleTex);
 
         if (!this.useCpu) {
             if (this.pack8) {
@@ -1062,7 +1063,6 @@ Object.assign(ParticleEmitter.prototype, {
 
             if (this.useCpu) {
                 this.vbCPU = new Float32Array(data);
-                this.vbOld = new Float32Array(this.vbCPU.length);
             }
             this.vertexBuffer.unlock();
             if (this.useMesh) {
@@ -1198,7 +1198,7 @@ Object.assign(ParticleEmitter.prototype, {
             this._gpuUpdater.update(device, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
         } else {
             var data = new Float32Array(this.vertexBuffer.lock());
-            this._cpuUpdater.update(data, this.vbToSort, this.particleTex, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
+            this._cpuUpdater.update(data, this.particleTex, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
             // this.vertexBuffer.unlock();
         }
 
