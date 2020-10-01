@@ -309,6 +309,7 @@ var ParticleEmitter = function (graphicsDevice, options) {
     this.colorParam = null;
 
     this.vbToSort = null;
+    this.vbCPU = null;
     this.vbOld = null;
     this.particleDistance = null;
 
@@ -1197,7 +1198,7 @@ Object.assign(ParticleEmitter.prototype, {
             this._gpuUpdater.update(device, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
         } else {
             var data = new Float32Array(this.vertexBuffer.lock());
-            this._cpuUpdater.update(data, this.vbToSort, this.particleTex, spawnMatrix, extentsInnerRatioUniform, emitterPos, delta, isOnStop);
+            this._cpuUpdater.update(data, this.vbToSort, this.particleTex, spawnMatrix, extentsInnerRatioUniform, delta, isOnStop);
             // this.vertexBuffer.unlock();
         }
 
